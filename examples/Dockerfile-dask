@@ -1,0 +1,6 @@
+FROM daskdev/dask
+
+COPY . /praetor
+WORKDIR /praetor
+
+RUN pip install -e .

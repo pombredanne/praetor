@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: praetor
+Version: 0.1
+Summary: Praetor: Web UI for Prefect
+Home-page: https://github.com/roveo/praetor
+Author: Mikhail Akimov
+Author-email: rovinj.akimov@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: webserver
+Provides-Extra: dev

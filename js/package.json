@@ -1,0 +1,27 @@
+{
+  "name": "praetor",
+  "version": "1.0.0",
+  "description": "Web UI for Prefect",
+  "private": true,
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "d3-path": "^1.0.8",
+    "vue": "^2.6.10",
+    "vue-router": "^3.1.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.2.0",
+    "vue-loader": "^15.7.1",
+    "vue-template-compiler": "^2.6.10",
+    "webpack": "^4.39.3",
+    "webpack-cli": "^3.3.7"
+  }
+}

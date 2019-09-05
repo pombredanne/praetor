@@ -1,0 +1,8 @@
+sqlalchemy
+psycopg2-binary
+starlette
+fastapi
+uvicorn
+pydantic
+aiofiles
+prefect

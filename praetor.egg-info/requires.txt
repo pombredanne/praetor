@@ -1,0 +1,21 @@
+requests
+requests-toolbelt
+prefect@ git+https://github.com/prefecthq/prefect.git
+
+[dev]
+alembic
+pytest
+pytest-pep8
+pytest-cov
+black
+pylint
+coverage
+
+[webserver]
+sqlalchemy
+psycopg2-binary
+starlette
+fastapi
+uvicorn
+pydantic
+aiofiles
