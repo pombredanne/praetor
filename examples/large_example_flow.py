@@ -1,4 +1,6 @@
-from prefect import task, Flow, Task, schedules
+import prefect
+from prefect import schedules
+from praetor import Flow, Task, task
 import time
 from random import randint
 from datetime import timedelta
@@ -89,4 +91,4 @@ tasks_names = [
 
 
 if __name__ == "__main__":
-    flow.run()
+    flow.run(executor=prefect.engine.executors.DaskExecutor("localhost:8786"))

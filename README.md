@@ -6,7 +6,7 @@ This is strictly for monitoring task states and looking at logs. If you need a f
 
 # What it does
 
-There are two parts to Praetor: webserver and flow runner. Webserver lets you look at what's going on with your flows and runner is used to run flows. Runner injects all the necessary state handlers to your flows and tasks and makes the report their state to webserver.
+There are two parts to Praetor: webserver and custom classes. Webserver lets you look at what's going on with your flows and runner is used to run flows. Custom classes are the same as normal Prefect classes: Flow, Task and `@task` decorator. The difference is that they report their state to the webserver.
 
 I tried to improve on the parts of Airflow UI that I didn't like:
 
@@ -24,31 +24,26 @@ I tried to improve on the parts of Airflow UI that I didn't like:
 To start webserver, run
 
 ```bash
-$ praetor webserver --dask tcp://localhost:8786
+$ praetor webserver --dask localhost:8786
 ```
 
-`--dask` is optional, the default is `tcp://127.0.0.1:8786`. Then go to [localhost:8000](http://localhost:8000/) to see your Web UI.
+`--dask` is optional. If you don't provide the dask option, the server will only be available in local mode.
 
 To run a flow, do:
 
-```bash
-$ praetor run your_flow.py --dask tcp://localhost:8786
+```py
+from praetor import Flow, Task, task  # instead of: from prefect import Flow, Task, task
 ```
 
-You can use your flow files as-is, with two important requirements:
+then proceed as usual.
 
-- Your flow needs to be importable from the file as `flow`.
-- You should "hide" your default `flow.run()` call, the runner will call it for you:
-  ```py
-  if __name__ == "__main__":
-      flow.run()
-  ```
-
-Dask uses `dask.distributed.Queue` for communication between webserver and runners, so dask cluster is required.
+These are subclasses of normal prefect classes, but with additional state handlers and hooks for reporting start/stop of the flow. If you use `DaskExecutor`, the flow will push update messages into a Queue on the dask cluster. If you're not using it, it will try and use a simple REST API at http://localhost:8000, which is called "local mode".
 
 # Installation
 
 For now, clone and run `$ python setup.py install -e '.[webserver]`. Note that this is not ready for production at all, so use at your own peril.
+
+Note that both prefect and praetor need to be installed on Dask workers. See `examples` folder for an example Dockerfile and Compose setup.
 
 # What needs to be done, but isn't
 

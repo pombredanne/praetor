@@ -2,7 +2,6 @@ README.md
 setup.cfg
 setup.py
 praetor/__init__.py
-praetor/__main__.py
 praetor/crud.py
 praetor/db.py
 praetor/models.py
@@ -17,7 +16,11 @@ praetor/bin/praetor
 praetor/cli/__init__.py
 praetor/cli/__main__.py
 praetor/cli/api.py
+praetor/cli/client.py
+praetor/cli/collector.py
+praetor/cli/handlers.py
 praetor/cli/run.py
+praetor/cli/shutdown.py
 praetor/cli/webserver.py
 praetor/migrations/__init__.py
 praetor/migrations/env.py
@@ -27,7 +30,7 @@ praetor/models/edge.py
 praetor/models/flow.py
 praetor/models/flow_run.py
 praetor/models/flow_session.py
-praetor/models/models.py
+praetor/models/log_record.py
 praetor/models/task.py
 praetor/models/task_run.py
 praetor/tests/__init__.py

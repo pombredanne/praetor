@@ -1,5 +1,6 @@
 from praetor import crud, schemas
 from praetor.db import Session
+from praetor.cli.collector import process_message
 
 from typing import List
 
@@ -78,3 +79,9 @@ def create_task_run(task_run: schemas.NaiveTaskRun, db: Session = Depends(get_db
 @app.get("/api/dask/")
 def get_dask():
     return PlainTextResponse(os.environ.get("DASK_UI"))
+
+
+@app.post("/api/message/")
+def receive_message(message: schemas.Message, db: Session = Depends(get_db)):
+    process_message(db, message.dict())
+    return PlainTextResponse("OK")

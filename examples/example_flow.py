@@ -1,9 +1,10 @@
 import prefect
+from praetor import Flow, Task, task
 import time
 from datetime import timedelta
 
 
-class Task1(prefect.Task):
+class Task1(Task):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -14,13 +15,13 @@ class Task1(prefect.Task):
         return 5
 
 
-@prefect.task
+@task
 def task2(x):
     time.sleep(5)
     return x
 
 
-@prefect.task(max_retries=3, retry_delay=timedelta(seconds=5))
+@task(max_retries=3, retry_delay=timedelta(seconds=5))
 def task3(x):
     time.sleep(5)
     if prefect.context.get("task_run_count") == 1:
@@ -28,14 +29,14 @@ def task3(x):
     return x
 
 
-@prefect.task
+@task
 def task4(x, y):
     time.sleep(5)
     return x
 
 
 schedule = prefect.schedules.CronSchedule("* * * * *")
-flow = prefect.Flow("example_flow", schedule=schedule)
+flow = Flow("example_flow")
 
 with flow:
     x = Task1()
@@ -44,4 +45,4 @@ with flow:
 
 
 if __name__ == "__main__":
-    flow.run(executor=prefect.engine.executors.LocalDaskExecutor())
+    flow.run(executor=prefect.engine.executors.DaskExecutor(address="127.0.0.1:8786"))
