@@ -171,3 +171,9 @@ class FlowDetail(Base, BaseFlow):
     tasks: List[Task]
     edges: List[Edge]
     recent_flow_runs: List[FlowRunDetail]
+
+
+class Message(BaseModel):
+
+    cls: str
+    obj: dict

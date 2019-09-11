@@ -1,6 +1,7 @@
 requests
 requests-toolbelt
 prefect@ git+https://github.com/prefecthq/prefect.git
+pydantic
 
 [dev]
 alembic
