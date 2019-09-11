@@ -43,6 +43,8 @@ These are subclasses of normal prefect classes, but with additional state handle
 
 For now, clone and run `$ python setup.py install -e '.[webserver]`. Note that this is not ready for production at all, so use at your own peril.
 
+Note that both prefect and praetor need to be installed on Dask workers. See `examples` folder for an example Dockerfile and Compose setup.
+
 # What needs to be done, but isn't
 
 - Configuration with config file, env variables and cli options. For example, right now sqlalchemy connection is hardcoded as `postgresql://praetor:praetor@localhost/praetor`.
