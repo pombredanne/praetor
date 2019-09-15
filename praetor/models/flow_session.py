@@ -1,11 +1,11 @@
+from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy.orm import relationship
+
 from praetor.models.base import Base
-from praetor.models.task import Task
 from praetor.models.edge import Edge
 from praetor.models.flow_run import FlowRun
+from praetor.models.task import Task
 from praetor.models.task_run import TaskRun
-
-from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship
 
 
 class FlowSession(Base):
@@ -46,8 +46,4 @@ class FlowSession(Base):
 
     def shutdown(self):
         if self.latest_flow_run:
-            if any(fr.state != "Success" for fr in self.latest_flow_run.task_runs):
-                self.state = "Canceled"
-                for task_run in self.latest_flow_run.task_runs:
-                    if task_run.state not in ("Success", "Failed"):
-                        task_run.state = "Canceled"
+            self.latest_flow_run.shutdown()

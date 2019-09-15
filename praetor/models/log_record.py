@@ -1,10 +1,10 @@
-from praetor.models.base import Base
-
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from praetor.models.base import Base
 
-class LogRecord(Base):
+
+class LogRecord:  # (Base):
 
     __tablename__ = "log_record"
 

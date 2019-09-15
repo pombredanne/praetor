@@ -1,8 +1,9 @@
-from praetor import schemas
-from praetor.utils import get_run_key
-from praetor.cli.client import LocalPraetorClient, DaskPraetorClient
-
 from dask.distributed import get_client
+from prefect import context as ctx
+
+from praetor import schemas
+from praetor.cli.client import DaskPraetorClient, LocalPraetorClient
+from praetor.utils import get_run_key
 
 
 def decide_client():
@@ -21,6 +22,8 @@ def flow_state_handler(flow, old, new):
 
 
 def task_state_handler(task, old, new):
-    task_run = schemas.NaiveTaskRun.from_prefect(task, state=new.__class__.__name__)
+    task_run = schemas.NaiveTaskRun.from_prefect(
+        task, state=new.__class__.__name__, map_index=ctx.map_index
+    )
     client = decide_client()
     client.send(task_run)

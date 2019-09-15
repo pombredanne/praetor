@@ -1,17 +1,18 @@
-from prefect import Flow
-from praetor.schemas import Base, NaiveFlow, NaiveFlowRun, NaiveTaskRun
-
-from requests_toolbelt.sessions import BaseUrlSession, urljoin
-from requests import ConnectionError
-import logging
-import os
 import json
-
-from dask.distributed import Client, Queue
+import logging
+import multiprocessing
+import os
 from contextlib import redirect_stdout
 from os import devnull
 
-import multiprocessing
+from dask.distributed import Client, Queue
+from prefect import Flow
+from requests import ConnectionError
+from requests_toolbelt.sessions import BaseUrlSession, urljoin
+
+from praetor.schemas import Base, NaiveFlow, NaiveFlowRun, NaiveTaskRun
+
+logger = logging.getLogger(__name__)
 
 
 class PraetorClient:
@@ -19,6 +20,7 @@ class PraetorClient:
         return dict(cls=obj.__class__.__name__, obj=obj.dict())
 
     def send(self, obj):
+        logger.debug(json.dumps(self.obj_to_message(obj)))
         self.send_message(self.obj_to_message(obj))
 
     def send_message(self, message):

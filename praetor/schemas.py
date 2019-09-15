@@ -1,7 +1,8 @@
-from typing import List
 from datetime import datetime
-from pydantic import BaseModel
+from typing import List
+
 import prefect
+from pydantic import BaseModel
 
 from praetor.utils import get_run_key
 
@@ -59,10 +60,6 @@ class NaiveFlow(BaseFlow):
     tasks: List[NaiveTask] = []
     edges: List[NaiveEdge] = []
 
-    @property
-    def filename(self):
-        return f"2_NaiveFlow__{self.name}.json"
-
     @staticmethod
     def get_schedule(schedule):
         if schedule is None:
@@ -99,29 +96,23 @@ class NaiveFlowRun(BaseFlowRun):
 
     flow: BaseFlow
 
-    @property
-    def filename(self):
-        return f"1_NaiveFlowRun__{self.flow.name}_{self.key}.json"
-
 
 class NaiveTaskRun(OrmModel):
 
     flow_run: NaiveFlowRun
     task: NaiveTask
-    state: str
-
-    @property
-    def filename(self):
-        return f"0_NaiveTaskRun__{self.task.name}__{self.flow_run.key}.json"
+    state: str = None
+    map_index: int = None
 
     @classmethod
-    def from_prefect(cls, task: prefect.Task, state):
+    def from_prefect(cls, task: prefect.Task, state, map_index=None):
         return cls(
             flow_run=NaiveFlowRun(
                 key=get_run_key(), flow=BaseFlow(name=prefect.context.flow_name)
             ),
             task=NaiveTask(name=task.name),
             state=state,
+            map_index=map_index,
         )
 
 

@@ -1,12 +1,15 @@
-from sqlalchemy import Column, String, Boolean, and_
+import logging
+from collections import defaultdict
+
+from sqlalchemy import Boolean, Column, String, and_
 from sqlalchemy.orm import relationship
 
 from praetor.models.base import Base
-from praetor.models.task import Task
 from praetor.models.flow_run import FlowRun
 from praetor.models.flow_session import FlowSession
+from praetor.models.task import Task
 
-from collections import defaultdict
+logger = logging.getLogger(__name__)
 
 
 class Flow(Base):
@@ -34,6 +37,7 @@ class Flow(Base):
     )
 
     def shutdown(self):
+        logger.debug(f"Shutting down flow: {self.name}")
         self.is_online = False
         if self.latest_session:
             self.latest_session.shutdown()
@@ -62,10 +66,12 @@ class Flow(Base):
 
     @property
     def tasks(self):
-        sess = self.latest_session
-        if sess is not None:
-            return sess.tasks
-        return []
+        """ Returns tasks used in recent_flow_runs.
+        """
+        return sorted(
+            {task for flow_run in self.recent_flow_runs for task in flow_run.tasks},
+            key=lambda t: t.id,
+        )
 
     @property
     def edges(self):
@@ -82,7 +88,10 @@ class Flow(Base):
 
     def create_session(self, db, tasks=None, edges=None):
         for flow_run in db.query(FlowRun).filter(
-            and_(FlowRun.flow == self, FlowRun.state.notin_(["Success", "Failed"]))
+            and_(
+                FlowRun.flow == self,
+                FlowRun.state.notin_(["Success", "Failed", "Mapped"]),
+            )
         ):
             flow_run.shutdown()  # shutdown all unfinished runs in previous sessions
         db.commit()

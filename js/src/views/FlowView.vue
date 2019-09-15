@@ -4,14 +4,14 @@
       <div v-if="!isLoaded" class="spinner-grow" role="status">
         <span class="sr-only">Loading...</span>
       </div>
-      <h3 v-if="isLoaded" class="card-title">{{ flow.name }}</h3>
-      <online-badge :is_online="flow.is_online" />
+      <h3 v-if="isLoaded" class="card-title">{{ linkedFlow.name }}</h3>
+      <online-badge :is_online="linkedFlow.is_online" />
     </div>
     <div class="card-body">
       <tasks-linear-graph
-        :tasks="sortedTasks"
-        :edges="flow.edges"
-        :flow_runs="flow.recent_flow_runs"
+        :tasks="linkedFlow.tasks"
+        :edges="linkedFlow.edges"
+        :flow_runs="linkedFlow.recent_flow_runs"
       />
     </div>
   </div>
@@ -33,7 +33,8 @@ export default {
       flow: {
         name: "test",
         tasks: [],
-        edges: []
+        edges: [],
+        recent_flow_runs: []
       },
       isLoaded: false
     };
@@ -62,7 +63,9 @@ export default {
             .forEach(t => walk(t));
         }
       };
-      const rootTasks = this.flow.tasks.filter(t => t.edges_in.length === 0);
+      const rootTasks = this.linkedFlow.tasks.filter(
+        t => t.edges_in.length === 0
+      );
       rootTasks.sort(terminalFirst).forEach(walk);
       tasks = tasks.map((t, i) => {
         t.index = i;
@@ -75,15 +78,37 @@ export default {
         o[t.name] = t;
         return o;
       }, {});
+    },
+    linkedFlow() {
+      // link tasks and edges together
+      const flow = Object.assign({}, this.flow);
+      flow.tasks = flow.tasks.map(t => {
+        t.edges_in = this.getEdgesIn(t.index);
+        t.edges_out = this.getEdgesOut(t.index);
+        return t;
+      });
+      flow.edges = flow.edges.map(e => {
+        e.upstream_task = flow.tasks[e.upstream_task.index];
+        e.downstream_task = flow.tasks[e.downstream_task.index];
+        return e;
+      });
+      flow.recent_flow_runs = flow.recent_flow_runs.map(flow_run => {
+        flow_run.task_runs = flow_run.task_runs.map(task_run => {
+          task_run.task = this.taskByName[task_run.task.name];
+          return task_run;
+        });
+        return flow_run;
+      });
+      return flow;
     }
   },
   methods: {
     defaultFlow() {
       return {
-        name: "test",
+        name: "",
         tasks: [],
         edges: [],
-        flow_runs: []
+        recent_flow_runs: []
       };
     },
     refresh() {
@@ -92,7 +117,6 @@ export default {
         .get(`/flows/${this.id}/`)
         .then(res => {
           this.flow = res.data;
-          this.updateLinks();
           this.connected();
         })
         .catch(e => {
@@ -102,26 +126,6 @@ export default {
         .finally(() => {
           this.isLoaded = true;
         });
-    },
-    updateLinks() {
-      // link tasks and edges together
-      this.flow.tasks = this.flow.tasks.map(t => {
-        t.edges_in = this.getEdgesIn(t.index);
-        t.edges_out = this.getEdgesOut(t.index);
-        return t;
-      });
-      this.flow.edges = this.flow.edges.map(e => {
-        e.upstream_task = this.flow.tasks[e.upstream_task.index];
-        e.downstream_task = this.flow.tasks[e.downstream_task.index];
-        return e;
-      });
-      this.flow.recent_flow_runs = this.flow.recent_flow_runs.map(flow_run => {
-        flow_run.task_runs = flow_run.task_runs.map(task_run => {
-          task_run.task = this.taskByName[task_run.task.name];
-          return task_run;
-        });
-        return flow_run;
-      });
     },
     getEdgesIn(index) {
       return this.flow.edges.filter(e => e.downstream_task.index == index);

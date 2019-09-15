@@ -1,10 +1,10 @@
 import prefect
-from praetor.cli.client import LocalPraetorClient, DaskPraetorClient
-from praetor.cli.handlers import flow_state_handler, task_state_handler
-from praetor import schemas
-
 from dask.distributed import get_client
 from toolz import curry
+
+from praetor import schemas
+from praetor.cli.client import DaskPraetorClient, LocalPraetorClient
+from praetor.cli.handlers import flow_state_handler, task_state_handler
 
 
 class NaiveMixin:
@@ -33,6 +33,10 @@ class Flow(NaiveMixin, prefect.Flow):
             self.report_offline(client)
 
     def get_client(self, executor=None):
+        """ Because self.run() is called multiple times
+            and in multiple contexts (both locally and on Dask),
+            we need to decide which client to use each time independently.
+        """
         try:
             return DaskPraetorClient(client=get_client())
         except ValueError:

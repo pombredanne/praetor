@@ -1,16 +1,19 @@
-from praetor.db import engine, sessionmaker, scoped_session, Session
-from praetor import crud
-from praetor.schemas import NaiveFlow, NaiveFlowRun, NaiveTaskRun
-
+import json
 import logging
 import threading
-from dask.distributed import Client, Queue, TimeoutError
 import time
 from contextlib import closing
 
+from dask.distributed import Client, Queue, TimeoutError
+
+from praetor import crud
+from praetor.db import Session, engine, scoped_session, sessionmaker
+from praetor.schemas import NaiveFlow, NaiveFlowRun, NaiveTaskRun
+
+logger = logging.getLogger(__name__)
+
 
 def process_message(db, message):
-    logger = logging.getLogger(__name__)
     logger.debug(f"Processing message: {message.get('cls')}")
     cls = globals()[message.get("cls")]
     obj = message.get("obj")

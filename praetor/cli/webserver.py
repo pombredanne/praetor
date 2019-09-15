@@ -1,17 +1,15 @@
-from praetor import crud, schemas
-from praetor.db import Session
-from praetor.cli.collector import process_message
-
+import os
+import pathlib
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
-from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
-from starlette.responses import Response, FileResponse, PlainTextResponse
+from starlette.responses import FileResponse, PlainTextResponse, Response
+from starlette.staticfiles import StaticFiles
 
-import pathlib
-import os
-
+from praetor import crud, schemas
+from praetor.cli.collector import process_message
+from praetor.db import Session
 
 app = FastAPI()
 
@@ -57,8 +55,8 @@ def delete_flow(flow_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/flows/{flow_id:int}/", response_model=schemas.FlowDetail)
-def get_flow(flow_id: int, db: Session = Depends(get_db)):
-    return crud.get_flow(db, flow_id)
+def get_flow(flow_id: int, flow_runs=10, db: Session = Depends(get_db)):
+    return crud.get_flow(db, flow_id, flow_runs=flow_runs)
 
 
 @app.post("/api/flows/", response_model=schemas.Flow)
