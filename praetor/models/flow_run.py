@@ -1,9 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, and_
+import logging
+
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, and_
 from sqlalchemy.orm import relationship
+
+from praetor.db import Session
 from praetor.models.base import Base
 from praetor.models.task import Task
 from praetor.models.task_run import TaskRun
-from praetor.db import Session
+
+FINAL_STATES = ["Success", "Failed", "Canceled", "Mapped"]
+
+logger = logging.getLogger(__name__)
 
 
 class FlowRun(Base):
@@ -20,19 +27,24 @@ class FlowRun(Base):
     flow_id = Column(Integer, ForeignKey("flow.id"), nullable=False)
     flow_session_id = Column(Integer, ForeignKey("flow_session.id"), nullable=False)
 
-    flow = relationship("Flow", back_populates="flow_runs")
+    flow = relationship("Flow")
     flow_session = relationship("FlowSession", back_populates="flow_runs")
 
     task_runs = relationship("TaskRun", order_by=TaskRun.id, back_populates="flow_run")
+
+    @property
+    def tasks(self):
+        return {task_run.task for task_run in self.task_runs}
 
     def ensure_task_run(self, db: Session, task: Task, **kwargs):
         return TaskRun.ensure(db, task=task, flow_run=self, **kwargs)
 
     def shutdown(self):
-        self.state = "Canceled"
-        for task_run in self.task_runs:
-            if task_run.state not in ("Success", "Failed", "Canceled"):
-                task_run.state = "Canceled"
+        if self.state not in FINAL_STATES:
+            self.state = "Canceled"
+            for task_run in self.task_runs:
+                if task_run.state not in FINAL_STATES:
+                    task_run.state = "Canceled"
 
     @classmethod
     def ensure(cls, db: Session, key, flow, flow_session, **kwargs):

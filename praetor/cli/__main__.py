@@ -15,7 +15,7 @@ def webserver(args):
     if args.dask is not None:
         collector = DaskPraetorCollector(address=args.dask)
         collector.start()
-    uvicorn.run("praetor.cli.webserver:app", reload=True)
+    uvicorn.run("praetor.cli.webserver:app", reload=True, log_level="debug")
     if args.dask is not None:
         collector.stop()
         collector.join()

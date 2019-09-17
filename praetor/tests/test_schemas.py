@@ -16,8 +16,3 @@ class TestNaiveFlowSchema:
     def test_schedule_extraction(self, flow):
         f = schemas.NaiveFlow.from_prefect(flow)
         assert f.schedule == "* * * * *"
-
-    def test_task_index_present(self, flow):
-        f = schemas.NaiveFlow.from_prefect(flow)
-        for task in f.tasks:
-            assert task.index is not None

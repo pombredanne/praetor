@@ -1,12 +1,15 @@
-from sqlalchemy import Column, String, Boolean, and_
+import logging
+from collections import defaultdict
+
+from sqlalchemy import Boolean, Column, String, and_
 from sqlalchemy.orm import relationship
 
 from praetor.models.base import Base
-from praetor.models.task import Task
 from praetor.models.flow_run import FlowRun
 from praetor.models.flow_session import FlowSession
+from praetor.models.task import Task
 
-from collections import defaultdict
+logger = logging.getLogger(__name__)
 
 
 class Flow(Base):
@@ -25,15 +28,11 @@ class Flow(Base):
         lazy="dynamic",
         cascade="save-update, delete",
     )
-    flow_runs = relationship(
-        "FlowRun",
-        order_by=FlowRun.id,
-        back_populates="flow",
-        lazy="dynamic",
-        cascade="save-update, delete",
-    )
+
+    tasks = relationship("Task", order_by=Task.id, cascade="save-update, delete")
 
     def shutdown(self):
+        logger.debug(f"Shutting down flow: {self.name}")
         self.is_online = False
         if self.latest_session:
             self.latest_session.shutdown()
@@ -61,13 +60,6 @@ class Flow(Base):
         return self.flow_sessions[-1] if self.flow_sessions.count() > 0 else None
 
     @property
-    def tasks(self):
-        sess = self.latest_session
-        if sess is not None:
-            return sess.tasks
-        return []
-
-    @property
     def edges(self):
         sess = self.latest_session
         if sess is not None:
@@ -77,19 +69,28 @@ class Flow(Base):
         return []
 
     @classmethod
-    def ensure(cls, db, name, **kwargs):
-        return cls.ensure_obj(db, dict(name=name), **kwargs)
+    def ensure(cls, db, name, tasks=None, **kwargs):
+        flow = cls.ensure_obj(db, dict(name=name), **kwargs)
+        db.commit()
+        for task in tasks or []:
+            cls.ensure_task(db, task.name, flow=flow)
+        db.commit()
+        return flow
 
-    def create_session(self, db, tasks=None, edges=None):
+    @classmethod
+    def ensure_task(cls, db, name, flow, **kwargs):
+        return Task.ensure(db, name, flow=flow, **kwargs)
+
+    def create_session(self, db, edges=None):
         for flow_run in db.query(FlowRun).filter(
-            and_(FlowRun.flow == self, FlowRun.state.notin_(["Success", "Failed"]))
+            and_(
+                FlowRun.flow == self,
+                FlowRun.state.notin_(["Success", "Failed", "Mapped"]),
+            )
         ):
             flow_run.shutdown()  # shutdown all unfinished runs in previous sessions
         db.commit()
         flow_session = FlowSession.create(db, flow=self)
-        db.commit()
-        for index, task in enumerate(tasks or []):
-            flow_session.ensure_task(db, task.name, index=index)
         db.commit()
         for edge in edges or []:
             upstream = flow_session.ensure_task(db, edge.upstream_task.name)

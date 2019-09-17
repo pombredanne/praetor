@@ -1,7 +1,8 @@
-from typing import List
 from datetime import datetime
-from pydantic import BaseModel
+from typing import List
+
 import prefect
+from pydantic import BaseModel
 
 from praetor.utils import get_run_key
 
@@ -26,11 +27,10 @@ class NaiveTask(OrmModel):
     """
 
     name: str
-    index: int = None
 
     @classmethod
-    def from_prefect(cls, task: prefect.Task, index=None):
-        return cls(name=task.name, index=index)
+    def from_prefect(cls, task: prefect.Task):
+        return cls(name=task.name)
 
 
 class BaseFlow(OrmModel):
@@ -59,10 +59,6 @@ class NaiveFlow(BaseFlow):
     tasks: List[NaiveTask] = []
     edges: List[NaiveEdge] = []
 
-    @property
-    def filename(self):
-        return f"2_NaiveFlow__{self.name}.json"
-
     @staticmethod
     def get_schedule(schedule):
         if schedule is None:
@@ -82,10 +78,15 @@ class NaiveFlow(BaseFlow):
             schedule=cls.get_schedule(flow.schedule),
             is_online=True,
             tasks=[
-                NaiveTask.from_prefect(t, index=i)
-                for i, t in enumerate(flow.sorted_tasks())
+                NaiveTask.from_prefect(t) for t in flow.tasks if not t.auto_generated
             ],
-            edges=[NaiveEdge.from_prefect(e) for e in flow.edges],
+            edges=[
+                NaiveEdge.from_prefect(e)
+                for e in flow.edges
+                if not (
+                    e.downstream_task.auto_generated or e.upstream_task.auto_generated
+                )
+            ],
         )
 
 
@@ -99,29 +100,23 @@ class NaiveFlowRun(BaseFlowRun):
 
     flow: BaseFlow
 
-    @property
-    def filename(self):
-        return f"1_NaiveFlowRun__{self.flow.name}_{self.key}.json"
-
 
 class NaiveTaskRun(OrmModel):
 
     flow_run: NaiveFlowRun
     task: NaiveTask
-    state: str
-
-    @property
-    def filename(self):
-        return f"0_NaiveTaskRun__{self.task.name}__{self.flow_run.key}.json"
+    state: str = None
+    map_index: int = None
 
     @classmethod
-    def from_prefect(cls, task: prefect.Task, state):
+    def from_prefect(cls, task: prefect.Task, state, map_index=None):
         return cls(
             flow_run=NaiveFlowRun(
                 key=get_run_key(), flow=BaseFlow(name=prefect.context.flow_name)
             ),
             task=NaiveTask(name=task.name),
             state=state,
+            map_index=map_index,
         )
 
 
@@ -149,16 +144,18 @@ class Task(Base, NaiveTask):
     state: str = None
 
 
-class Edge(Base, NaiveEdge):
+class Edge(Base):
 
-    upstream_task: Task
-    downstream_task: Task
+    upstream_task_id: int
+    downstream_task_id: int
 
 
-class TaskRun(Base, NaiveTaskRun):
+class TaskRun(Base):
 
-    flow_run: FlowRun
-    task: Task
+    task_id: int
+    state: str
+    flow_run: NaiveFlowRun
+    map_index: int
 
 
 class FlowRunDetail(FlowRun):
@@ -170,7 +167,7 @@ class FlowDetail(Base, BaseFlow):
 
     tasks: List[Task]
     edges: List[Edge]
-    recent_flow_runs: List[FlowRunDetail]
+    flow_runs: List[FlowRunDetail] = []
 
 
 class Message(BaseModel):

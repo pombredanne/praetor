@@ -4,7 +4,6 @@ setup.py
 praetor/__init__.py
 praetor/crud.py
 praetor/db.py
-praetor/models.py
 praetor/schemas.py
 praetor/utils.py
 praetor.egg-info/PKG-INFO

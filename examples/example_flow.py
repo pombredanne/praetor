@@ -1,7 +1,9 @@
-import prefect
-from praetor import Flow, Task, task
 import time
 from datetime import timedelta
+
+import prefect
+
+from praetor import Flow, Task, task
 
 
 class Task1(Task):
@@ -12,12 +14,12 @@ class Task1(Task):
         time.sleep(5)
         run = prefect.context["scheduled_start_time"].strftime("%Y-%m-%d %H:%M:%S")
         self.logger.warning(f"CURRENT RUN: {run}")
-        return 5
+        return list(range(5))
 
 
 @task
 def task2(x):
-    time.sleep(5)
+    time.sleep(x)
     return x
 
 
@@ -30,7 +32,7 @@ def task3(x):
 
 
 @task
-def task4(x, y):
+def task4(xs, y):
     time.sleep(5)
     return x
 
@@ -40,8 +42,8 @@ flow = Flow("example_flow")
 
 with flow:
     x = Task1()
-    task2(x)
-    task4(x, task3(x))
+    xs = task2.map(x)
+    task4(xs, task3(x))
 
 
 if __name__ == "__main__":

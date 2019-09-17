@@ -9,15 +9,12 @@ from sqlalchemy.orm import relationship
 class Task(Base):
 
     __tablename__ = "task"
-    __table_args__ = (UniqueConstraint("name", "flow_session_id"),)
+    __table_args__ = (UniqueConstraint("name", "flow_id"),)
 
     name = Column(String(32), nullable=False)
-    index = Column(Integer, nullable=False)
     flow_id = Column(Integer, ForeignKey("flow.id"), nullable=False)
-    flow_session_id = Column(Integer, ForeignKey("flow_session.id"), nullable=False)
 
-    flow = relationship("Flow")
-    flow_session = relationship("FlowSession", back_populates="tasks")
+    flow = relationship("Flow", back_populates="tasks")
     task_runs = relationship(
         "TaskRun",
         order_by=TaskRun.id,
@@ -40,10 +37,8 @@ class Task(Base):
     )
 
     @classmethod
-    def ensure(cls, db, name, flow_session, flow, **kwargs):
-        return cls.ensure_obj(
-            db, dict(name=name, flow_session=flow_session), flow=flow, **kwargs
-        )
+    def ensure(cls, db, name, flow, **kwargs):
+        return cls.ensure_obj(db, dict(name=name), flow=flow, **kwargs)
 
     @property
     def state(self):

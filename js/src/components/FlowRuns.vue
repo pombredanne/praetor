@@ -1,6 +1,6 @@
 <template>
   <g>
-    <g v-for="(flow_run, i) in flow_runs" :key="flow_run.id" :transform="translate(i * 12, 0)">
+    <g v-for="(flow_run, i) in flow_runs" :key="flow_run.id" :transform="translate(i * 17, 0)">
       <task-runs :task_runs="flow_run.task_runs" />
     </g>
   </g>
