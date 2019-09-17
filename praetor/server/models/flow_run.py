@@ -3,10 +3,10 @@ import logging
 from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint, and_
 from sqlalchemy.orm import relationship
 
-from praetor.db import Session
-from praetor.models.base import Base
-from praetor.models.task import Task
-from praetor.models.task_run import TaskRun
+from praetor.server.db import Session
+from praetor.server.models.base import Base
+from praetor.server.models.task import Task
+from praetor.server.models.task_run import TaskRun
 
 FINAL_STATES = ["Success", "Failed", "Canceled", "Mapped"]
 

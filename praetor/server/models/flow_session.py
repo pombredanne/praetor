@@ -1,11 +1,11 @@
 from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
-from praetor.models.base import Base
-from praetor.models.edge import Edge
-from praetor.models.flow_run import FlowRun
-from praetor.models.task import Task
-from praetor.models.task_run import TaskRun
+from praetor.server.models.base import Base
+from praetor.server.models.edge import Edge
+from praetor.server.models.flow_run import FlowRun
+from praetor.server.models.task import Task
+from praetor.server.models.task_run import TaskRun
 
 
 class FlowSession(Base):

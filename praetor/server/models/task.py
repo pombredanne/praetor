@@ -1,9 +1,9 @@
-from praetor.models.base import Base
-from praetor.models.task_run import TaskRun
-from praetor.models.edge import Edge
-
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
+
+from praetor.server.models.base import Base
+from praetor.server.models.edge import Edge
+from praetor.server.models.task_run import TaskRun
 
 
 class Task(Base):

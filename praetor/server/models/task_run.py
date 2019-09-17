@@ -3,8 +3,8 @@ import logging
 from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from praetor.models.base import Base
-from praetor.models.log_record import LogRecord
+from praetor.server.models.base import Base
+from praetor.server.models.log_record import LogRecord
 
 logger = logging.getLogger(__name__)
 

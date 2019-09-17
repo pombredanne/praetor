@@ -3,8 +3,8 @@ from dask.distributed import get_client
 from toolz import curry
 
 from praetor import schemas
-from praetor.cli.client import DaskPraetorClient, LocalPraetorClient
-from praetor.cli.handlers import flow_state_handler, task_state_handler
+from praetor.client.client import DaskPraetorClient, LocalPraetorClient
+from praetor.client.handlers import flow_state_handler, task_state_handler
 
 
 class NaiveMixin:

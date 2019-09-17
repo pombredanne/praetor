@@ -1,7 +1,7 @@
-from praetor.models.base import Base
-
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
+
+from praetor.server.models.base import Base
 
 
 class Edge(Base):

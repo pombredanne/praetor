@@ -7,9 +7,10 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, PlainTextResponse, Response
 from starlette.staticfiles import StaticFiles
 
-from praetor import crud, schemas
-from praetor.cli.collector import process_message
-from praetor.db import Session
+from praetor import schemas
+from praetor.server import crud
+from praetor.server.collector import process_message
+from praetor.server.db import Session
 
 app = FastAPI()
 
