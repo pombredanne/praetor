@@ -18,9 +18,6 @@ class FlowSession(Base):
     flow_runs = relationship(
         "FlowRun", order_by=FlowRun.id, back_populates="flow_session"
     )
-    tasks = relationship(
-        "Task", back_populates="flow_session", cascade="save-update, delete"
-    )
     edges = relationship(
         "Edge", back_populates="flow_session", cascade="save-update, delete"
     )

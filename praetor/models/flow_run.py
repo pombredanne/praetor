@@ -27,7 +27,7 @@ class FlowRun(Base):
     flow_id = Column(Integer, ForeignKey("flow.id"), nullable=False)
     flow_session_id = Column(Integer, ForeignKey("flow_session.id"), nullable=False)
 
-    flow = relationship("Flow", back_populates="flow_runs")
+    flow = relationship("Flow")
     flow_session = relationship("FlowSession", back_populates="flow_runs")
 
     task_runs = relationship("TaskRun", order_by=TaskRun.id, back_populates="flow_run")

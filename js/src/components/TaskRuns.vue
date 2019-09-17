@@ -45,6 +45,11 @@ rect {
 }
 
 rect:hover {
+  stroke: black;
   stroke-width: 2;
+}
+
+text {
+  pointer-events: none;
 }
 </style>

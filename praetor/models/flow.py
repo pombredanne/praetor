@@ -28,13 +28,8 @@ class Flow(Base):
         lazy="dynamic",
         cascade="save-update, delete",
     )
-    flow_runs = relationship(
-        "FlowRun",
-        order_by=FlowRun.id,
-        back_populates="flow",
-        lazy="dynamic",
-        cascade="save-update, delete",
-    )
+
+    tasks = relationship("Task", order_by=Task.id, cascade="save-update, delete")
 
     def shutdown(self):
         logger.debug(f"Shutting down flow: {self.name}")
@@ -65,15 +60,6 @@ class Flow(Base):
         return self.flow_sessions[-1] if self.flow_sessions.count() > 0 else None
 
     @property
-    def tasks(self):
-        """ Returns tasks used in recent_flow_runs.
-        """
-        return sorted(
-            {task for flow_run in self.recent_flow_runs for task in flow_run.tasks},
-            key=lambda t: t.id,
-        )
-
-    @property
     def edges(self):
         sess = self.latest_session
         if sess is not None:
@@ -83,10 +69,19 @@ class Flow(Base):
         return []
 
     @classmethod
-    def ensure(cls, db, name, **kwargs):
-        return cls.ensure_obj(db, dict(name=name), **kwargs)
+    def ensure(cls, db, name, tasks=None, **kwargs):
+        flow = cls.ensure_obj(db, dict(name=name), **kwargs)
+        db.commit()
+        for task in tasks or []:
+            cls.ensure_task(db, task.name, flow=flow)
+        db.commit()
+        return flow
 
-    def create_session(self, db, tasks=None, edges=None):
+    @classmethod
+    def ensure_task(cls, db, name, flow, **kwargs):
+        return Task.ensure(db, name, flow=flow, **kwargs)
+
+    def create_session(self, db, edges=None):
         for flow_run in db.query(FlowRun).filter(
             and_(
                 FlowRun.flow == self,
@@ -96,9 +91,6 @@ class Flow(Base):
             flow_run.shutdown()  # shutdown all unfinished runs in previous sessions
         db.commit()
         flow_session = FlowSession.create(db, flow=self)
-        db.commit()
-        for index, task in enumerate(tasks or []):
-            flow_session.ensure_task(db, task.name, index=index)
         db.commit()
         for edge in edges or []:
             upstream = flow_session.ensure_task(db, edge.upstream_task.name)

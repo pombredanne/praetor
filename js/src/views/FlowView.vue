@@ -4,15 +4,11 @@
       <div v-if="!isLoaded" class="spinner-grow" role="status">
         <span class="sr-only">Loading...</span>
       </div>
-      <h3 v-if="isLoaded" class="card-title">{{ linkedFlow.name }}</h3>
-      <online-badge :is_online="linkedFlow.is_online" />
+      <h3 v-if="isLoaded" class="card-title">{{ flow.name }}</h3>
+      <online-badge :is_online="flow.is_online" />
     </div>
     <div class="card-body">
-      <tasks-linear-graph
-        :tasks="linkedFlow.tasks"
-        :edges="linkedFlow.edges"
-        :flow_runs="linkedFlow.recent_flow_runs"
-      />
+      <tasks-linear-graph :tasks="flow.tasks" :edges="flow.edges" :flow_runs="flow.flow_runs" />
     </div>
   </div>
 </template>
@@ -30,77 +26,9 @@ export default {
   mixins: [DisconnectMixin],
   data() {
     return {
-      flow: {
-        name: "test",
-        tasks: [],
-        edges: [],
-        recent_flow_runs: []
-      },
+      flow: this.defaultFlow(),
       isLoaded: false
     };
-  },
-  computed: {
-    sortedTasks() {
-      /* traverses task in the order of fake sequential execution
-         and sets an appropriate index for each task (mutating)
-         ugly and hacky, some elegant map-reduce functional magic needed */
-      const ids = [];
-      var tasks = [];
-      const dependenciesMet = task => {
-        return task.edges_in
-          .map(e => ids.indexOf(e.upstream_task.id) > -1)
-          .reduce((acc, x) => acc && x, true);
-      };
-      // tasks with less out-connections come first
-      const terminalFirst = (a, b) => a.edges_out.length - b.edges_out.length;
-      const walk = task => {
-        if (dependenciesMet(task) && ids.indexOf(task.id) === -1) {
-          ids.push(task.id);
-          tasks.push(task);
-          task.edges_out
-            .map(e => e.downstream_task)
-            .sort(terminalFirst)
-            .forEach(t => walk(t));
-        }
-      };
-      const rootTasks = this.linkedFlow.tasks.filter(
-        t => t.edges_in.length === 0
-      );
-      rootTasks.sort(terminalFirst).forEach(walk);
-      tasks = tasks.map((t, i) => {
-        t.index = i;
-        return t;
-      });
-      return tasks;
-    },
-    taskByName() {
-      return this.flow.tasks.reduce((o, t) => {
-        o[t.name] = t;
-        return o;
-      }, {});
-    },
-    linkedFlow() {
-      // link tasks and edges together
-      const flow = Object.assign({}, this.flow);
-      flow.tasks = flow.tasks.map(t => {
-        t.edges_in = this.getEdgesIn(t.index);
-        t.edges_out = this.getEdgesOut(t.index);
-        return t;
-      });
-      flow.edges = flow.edges.map(e => {
-        e.upstream_task = flow.tasks[e.upstream_task.index];
-        e.downstream_task = flow.tasks[e.downstream_task.index];
-        return e;
-      });
-      flow.recent_flow_runs = flow.recent_flow_runs.map(flow_run => {
-        flow_run.task_runs = flow_run.task_runs.map(task_run => {
-          task_run.task = this.taskByName[task_run.task.name];
-          return task_run;
-        });
-        return flow_run;
-      });
-      return flow;
-    }
   },
   methods: {
     defaultFlow() {
@@ -108,16 +36,16 @@ export default {
         name: "",
         tasks: [],
         edges: [],
-        recent_flow_runs: []
+        flow_runs: []
       };
     },
     refresh() {
-      this.isLoading = true;
       api
         .get(`/flows/${this.id}/`)
         .then(res => {
-          this.flow = res.data;
-          this.connected();
+          const flow = this.linkFlow(res.data);
+          flow.tasks = this.sortTasks(flow.tasks);
+          this.flow = flow;
         })
         .catch(e => {
           this.disconnected();
@@ -127,18 +55,79 @@ export default {
           this.isLoaded = true;
         });
     },
-    getEdgesIn(index) {
-      return this.flow.edges.filter(e => e.downstream_task.index == index);
+    getEdgesIn(id, edges) {
+      return edges.filter(e => e.downstream_task_id == id);
     },
-    getEdgesOut(index) {
-      return this.flow.edges.filter(e => e.upstream_task.index == index);
+    getEdgesOut(id, edges) {
+      return edges.filter(e => e.upstream_task_id == id);
+    },
+    sortTasks(tasks) {
+      /* traverses task in the order of fake sequential execution
+          and sets an appropriate index for each task (mutating)
+          ugly and hacky, some elegant map-reduce functional magic needed */
+      const ids = [];
+      var res = [];
+      const dependenciesMet = task => {
+        return task.edges_in
+          .map(e => ids.indexOf(e.upstream_task.id) > -1)
+          .reduce((acc, x) => acc && x, true);
+      };
+      // tasks with less out-connections come first
+      const terminalFirst = (a, b) =>
+        a.edges_out.length - b.edges_out.length || a.name > b.name ? 1 : -1;
+      const walk = task => {
+        if (dependenciesMet(task) && ids.indexOf(task.id) === -1) {
+          ids.push(task.id);
+          res.push(task);
+          task.edges_out
+            .map(e => e.downstream_task)
+            .sort(terminalFirst)
+            .forEach(t => walk(t));
+        }
+      };
+      const rootTasks = tasks.filter(t => t.edges_in.length === 0);
+      rootTasks.sort(terminalFirst).forEach(walk);
+      res = res.map((t, i) => {
+        t.index = i;
+        return t;
+      });
+      return res;
+    },
+    linkFlow(flow) {
+      // link tasks and edges together
+      flow.tasks = flow.tasks.map(t => {
+        return Object.assign(t, {
+          edges_in: this.getEdgesIn(t.id, flow.edges),
+          edges_out: this.getEdgesOut(t.id, flow.edges)
+        });
+      });
+      flow.edges = flow.edges.map(e => {
+        return Object.assign(e, {
+          upstream_task: this.getById(flow.tasks, e.upstream_task_id),
+          downstream_task: this.getById(flow.tasks, e.downstream_task_id)
+        });
+      });
+      flow.flow_runs = flow.flow_runs.map(fr => {
+        return Object.assign(fr, {
+          task_runs: fr.task_runs.map(tr => {
+            return Object.assign(tr, {
+              task: this.getById(flow.tasks, tr.task_id)
+            });
+          })
+        });
+      });
+      return flow;
+    },
+    getById(objs, id) {
+      return objs.filter(o => o.id === id)[0];
     }
   },
   beforeRouteEnter(from, to, next) {
     next(self => {
+      self.refresh();
       self.refreshInterval = setInterval(() => {
         self.refresh();
-      }, 1000);
+      }, 10000);
     });
   },
   beforeRouteLeave(from, to, next) {

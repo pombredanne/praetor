@@ -17,20 +17,13 @@ def tsk(x=None):
 with flow:
     start = task(tsk, name="start")
 
-    syncs = [
-        "sync__BOB5",
-        "sync__BOB6",
-        "sync__GRP",
-        "sync__LYU1",
-        "sync__LYU2",
-        "sync__LYU3-4",
-        "sync__RIK",
-        "sync__ZHU",
-    ]
+    tables = ["BOB5", "BOB6", "GRP", "LYU1", "LYU2", "LYU3-4", "RIK", "ZHU"]
 
-    sync_map = task(tsk, name="sync")
-    x = sync_map.map(syncs)
-    start.set_downstream(x)
+    sync_table = task(tsk, name="sync_table")
+    copy_table = task(tsk, name="copy_table")
+    t1 = sync_table.map(tables)
+    t2 = copy_table.map(t1)
+    start.set_downstream(t1)
 
 #     delete_tc = task(tsk, name="delete_tc")
 #     copy_tc = task(tsk, name="copy_tc")
