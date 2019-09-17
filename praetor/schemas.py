@@ -4,7 +4,7 @@ from typing import List
 import prefect
 from pydantic import BaseModel
 
-from praetor.utils import get_run_key
+from praetor.client.utils import get_run_key
 
 
 class OrmModel(BaseModel):

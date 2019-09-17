@@ -4,10 +4,10 @@ from collections import defaultdict
 from sqlalchemy import Boolean, Column, String, and_
 from sqlalchemy.orm import relationship
 
-from praetor.models.base import Base
-from praetor.models.flow_run import FlowRun
-from praetor.models.flow_session import FlowSession
-from praetor.models.task import Task
+from praetor.server.models.base import Base
+from praetor.server.models.flow_run import FlowRun
+from praetor.server.models.flow_session import FlowSession
+from praetor.server.models.task import Task
 
 logger = logging.getLogger(__name__)
 

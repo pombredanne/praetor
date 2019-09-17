@@ -1,7 +1,7 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from praetor.models.base import Base
+from praetor.server.models.base import Base
 
 
 class LogRecord:  # (Base):

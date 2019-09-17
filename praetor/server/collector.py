@@ -6,9 +6,9 @@ from contextlib import closing
 
 from dask.distributed import Client, Queue, TimeoutError
 
-from praetor import crud
-from praetor.db import Session, engine, scoped_session, sessionmaker
 from praetor.schemas import NaiveFlow, NaiveFlowRun, NaiveTaskRun
+from praetor.server import crud
+from praetor.server.db import Session, engine, scoped_session, sessionmaker
 
 logger = logging.getLogger(__name__)
 

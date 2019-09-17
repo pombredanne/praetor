@@ -1,5 +1,5 @@
 from praetor.cli.run import run
-from praetor.cli.collector import DaskPraetorCollector
+from praetor.server.collector import DaskPraetorCollector
 
 import argparse
 import uvicorn
@@ -15,7 +15,7 @@ def webserver(args):
     if args.dask is not None:
         collector = DaskPraetorCollector(address=args.dask)
         collector.start()
-    uvicorn.run("praetor.cli.webserver:app", reload=True, log_level="debug")
+    uvicorn.run("praetor.server.webserver:app", reload=True, log_level="debug")
     if args.dask is not None:
         collector.stop()
         collector.join()

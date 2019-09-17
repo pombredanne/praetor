@@ -2,8 +2,8 @@ from dask.distributed import get_client
 from prefect import context as ctx
 
 from praetor import schemas
-from praetor.cli.client import DaskPraetorClient, LocalPraetorClient
-from praetor.utils import get_run_key
+from praetor.client.client import DaskPraetorClient, LocalPraetorClient
+from praetor.client.utils import get_run_key
 
 
 def decide_client():

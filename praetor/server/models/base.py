@@ -1,7 +1,7 @@
+from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, DateTime, String
-from sqlalchemy.sql import func
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql import func
 
 
 class Base:

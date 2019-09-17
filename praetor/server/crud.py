@@ -1,11 +1,10 @@
 import logging
 
-from praetor import schemas
-from praetor.db import Session
-from praetor.models import Flow, FlowRun, TaskRun
-
 from sqlalchemy import and_
 
+from praetor import schemas
+from praetor.server.db import Session
+from praetor.server.models import Flow, FlowRun, TaskRun
 
 logger = logging.getLogger(__name__)
 

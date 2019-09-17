@@ -1,19 +1,18 @@
+import logging
 import signal
 import sys
-from importlib.util import spec_from_file_location, module_from_spec
+from importlib.util import module_from_spec, spec_from_file_location
 
-from praetor.cli.api import Praetor
-from praetor.cli.shutdown import register_shutdown_signals
-from praetor.schemas import NaiveFlowRun, NaiveFlow, NaiveTaskRun
-from praetor.utils import get_run_key
-
+from dask.distributed import Queue, get_client, get_worker
 from prefect import Flow
-from prefect.engine.executors import DaskExecutor
 from prefect.engine import FlowRunner
+from prefect.engine.executors import DaskExecutor
 
-from dask.distributed import get_worker, get_client, Queue
-import logging
-
+from praetor.client.api import Praetor
+from praetor.client.handlers import flow_state_handler, task_state_handler
+from praetor.client.shutdown import register_shutdown_signals
+from praetor.client.utils import get_run_key
+from praetor.schemas import NaiveFlow, NaiveFlowRun, NaiveTaskRun
 
 PRAETOR_DEFAULT_URL = "http://localhost:8000/"
 
@@ -29,28 +28,6 @@ def shutdown_flow(dask, flow: Flow):
         f = NaiveFlow.from_prefect(flow)
         api.shutdown_flow(f)
         sys.exit(0)
-
-    return inner
-
-
-def flow_state_handler(dask: str):
-    def inner(flow, old, new):
-        api = Praetor(dask)
-        flow_run = NaiveFlowRun(
-            key=get_run_key(),
-            flow=NaiveFlow.from_prefect(flow),
-            state=new.__class__.__name__,
-        )
-        api.post_flow_run(flow_run)
-
-    return inner
-
-
-def task_state_handler():
-    def inner(task, old, new):
-        api = Praetor(client=get_client())
-        task_run = NaiveTaskRun.from_prefect(task, state=new.__class__.__name__)
-        api.post_task_run(task_run)
 
     return inner
 
